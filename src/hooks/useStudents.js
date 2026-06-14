@@ -16,6 +16,39 @@ export function useStudents() {
   })
 }
 
+export function useStudentsByClass(classId) {
+  return useQuery({
+    queryKey: ['students', 'class', classId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('students')
+        .select('*')
+        .eq('class_id', classId)
+        .eq('active', true)
+        .order('name')
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!classId
+  })
+}
+
+export function useStudentById(studentId) {
+  return useQuery({
+    queryKey: ['students', studentId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('students')
+        .select('*, class:classes(id, name, monthly_fee)')
+        .eq('id', studentId)
+        .single()
+      if (error) throw error
+      return data
+    },
+    enabled: !!studentId
+  })
+}
+
 export function useCreateStudent() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -29,6 +62,43 @@ export function useCreateStudent() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['students'] })
+      queryClient.invalidateQueries({ queryKey: ['payments'] })
+    }
+  })
+}
+
+export function useUpdateStudent() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, name, class_id }) => {
+      const { data, error } = await supabase
+        .from('students')
+        .update({ name, class_id })
+        .eq('id', id)
+        .select()
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['students'] })
+      queryClient.invalidateQueries({ queryKey: ['payments'] })
+    }
+  })
+}
+
+export function useArchiveStudent() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (studentId) => {
+      const { error } = await supabase
+        .from('students')
+        .update({ active: false })
+        .eq('id', studentId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['students'] })
+      queryClient.invalidateQueries({ queryKey: ['payments'] })
     }
   })
 }

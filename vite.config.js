@@ -7,10 +7,11 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'auto',
       manifest: {
         name: 'Thu Học Phí',
         short_name: 'Học Phí',
-        description: 'Ứng dụng quản lý thu học phí',
+        description: 'Ứng dụng quản lý thu học phí cho trường học',
         start_url: '/',
         scope: '/',
         display: 'standalone',
@@ -20,21 +21,30 @@ export default defineConfig({
         orientation: 'portrait-primary',
         icons: [
           {
-            src: '/icons/icon-192.png',
+            src: '/icons/icon-192.svg',
             sizes: '192x192',
-            type: 'image/png',
+            type: 'image/svg+xml',
             purpose: 'any'
           },
           {
-            src: '/icons/icon-512.png',
+            src: '/icons/icon-512.svg',
             sizes: '512x512',
-            type: 'image/png',
+            type: 'image/svg+xml',
             purpose: 'any'
+          }
+        ],
+        screenshots: [
+          {
+            src: '/icons/screenshot-540.png',
+            sizes: '540x720',
+            type: 'image/png',
+            form_factor: 'narrow'
           }
         ],
         categories: ['business', 'finance']
       },
       workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
@@ -44,6 +54,17 @@ export default defineConfig({
               expiration: {
                 maxEntries: 50,
                 maxAgeSeconds: 5 * 60
+              }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-cache',
+              expiration: {
+                maxEntries: 20,
+                maxAgeSeconds: 60 * 60 * 24 * 365
               }
             }
           }

@@ -7,9 +7,38 @@ export function useMonthlyPayments(month, year) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
-        .select('*, student:students(name, class:classes(name, monthly_fee))')
+        .select('*, student:students(name, class_id, class:classes(name, monthly_fee))')
         .eq('month', month)
         .eq('year', year)
+      if (error) throw error
+      return data || []
+    }
+  })
+}
+
+export function useAllPayments() {
+  return useQuery({
+    queryKey: ['payments'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('*, student:students(name, class_id, class:classes(name, monthly_fee))')
+      if (error) throw error
+      return data || []
+    }
+  })
+}
+
+export function useStudentPayments(studentId) {
+  return useQuery({
+    queryKey: ['payments', 'student', studentId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('student_id', studentId)
+        .order('year', { ascending: false })
+        .order('month', { ascending: false })
       if (error) throw error
       return data || []
     }

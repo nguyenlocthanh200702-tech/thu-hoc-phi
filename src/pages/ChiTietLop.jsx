@@ -1,13 +1,139 @@
-import { useParams } from 'react-router-dom'
+import { useState } from 'react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useClassById } from '../hooks/useClasses'
+import { useStudentsByClass } from '../hooks/useStudents'
+import { useAllPayments } from '../hooks/usePayment'
+import { getCurrentMonth, getCurrentYear, formatCurrency } from '../utils/helpers'
+import LoadingSpinner from '../components/LoadingSpinner'
 
 export default function ChiTietLop() {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const [filter, setFilter] = useState('all')
+  const month = getCurrentMonth()
+  const year = getCurrentYear()
+
+  const { data: cls, isLoading: classLoading } = useClassById(id)
+  const { data: students = [], isLoading: studentsLoading } = useStudentsByClass(id)
+  const { data: payments = [], isLoading: paymentsLoading } = useAllPayments()
+
+  if (classLoading || studentsLoading || paymentsLoading) {
+    return <LoadingSpinner />
+  }
+
+  if (!cls) {
+    return (
+      <div className="p-4 pb-24">
+        <p className="text-red-500">Không tìm thấy lớp</p>
+      </div>
+    )
+  }
+
+  const monthPayments = payments.filter(
+    p => p.month === month && p.year === year && 
+         students.some(s => s.id === p.student_id)
+  )
+
+  const paidStudents = new Set(monthPayments.filter(p => p.paid).map(p => p.student_id))
+  
+  let filteredStudents = students
+  if (filter === 'paid') {
+    filteredStudents = students.filter(s => paidStudents.has(s.id))
+  } else if (filter === 'unpaid') {
+    filteredStudents = students.filter(s => !paidStudents.has(s.id))
+  }
+
+  const paidCount = paidStudents.size
+  const unpaidCount = students.length - paidCount
+
   return (
     <div className="p-4 pb-24">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Chi tiết lớp</h1>
-      <div className="bg-white rounded-lg shadow p-4">
-        <p className="text-gray-600">Chi tiết lớp {id} sẽ hiển thị ở đây</p>
+      <button
+        onClick={() => navigate(-1)}
+        className="text-emerald-600 text-sm mb-4 hover:text-emerald-700"
+      >
+        ← Quay lại
+      </button>
+
+      <div className="bg-white rounded-lg shadow p-4 mb-6">
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">{cls.name}</h1>
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <p className="text-xs text-gray-600">Tổng học sinh</p>
+            <p className="text-xl font-bold text-gray-800">{students.length}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-600">Học phí</p>
+            <p className="text-sm font-bold text-gray-800">{formatCurrency(cls.monthly_fee)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-600">Dự kiến</p>
+            <p className="text-sm font-bold text-gray-800">{formatCurrency(cls.monthly_fee * students.length)}</p>
+          </div>
+        </div>
       </div>
+
+      <div className="bg-white rounded-lg shadow p-4 mb-6">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setFilter('all')}
+            className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
+              filter === 'all'
+                ? 'bg-emerald-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Tất cả ({students.length})
+          </button>
+          <button
+            onClick={() => setFilter('paid')}
+            className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
+              filter === 'paid'
+                ? 'bg-emerald-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            ✓ ({paidCount})
+          </button>
+          <button
+            onClick={() => setFilter('unpaid')}
+            className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
+              filter === 'unpaid'
+                ? 'bg-emerald-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            ✕ ({unpaidCount})
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        {filteredStudents.map(student => {
+          const isPaid = paidStudents.has(student.id)
+          return (
+            <Link
+              key={student.id}
+              to={`/hoc-sinh/${student.id}`}
+              className="flex items-center justify-between bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center gap-3 flex-1">
+                <span className={`text-2xl ${isPaid ? 'text-emerald-500' : 'text-red-500'}`}>
+                  {isPaid ? '🟢' : '🔴'}
+                </span>
+                <span className="font-medium text-gray-800">{student.name}</span>
+              </div>
+              <span className="text-gray-400">→</span>
+            </Link>
+          )
+        })}
+      </div>
+
+      {filteredStudents.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-gray-500">Không có học sinh nào</p>
+        </div>
+      )}
     </div>
   )
 }
