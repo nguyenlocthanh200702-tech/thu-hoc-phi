@@ -52,10 +52,13 @@ export function useStudentById(studentId) {
 export function useCreateStudent() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ name, class_id }) => {
+    mutationFn: async ({ name, class_id, start_date, school_grade, main_school_class, school_name }) => {
+      // Default school_name to "Chu Văn An" if not provided and not "Trường khác"
+      const finalSchoolName = main_school_class === 'Trường khác' ? school_name : 'Chu Văn An'
+      
       const { data, error } = await supabase
         .from('students')
-        .insert([{ name, class_id }])
+        .insert([{ name, class_id, start_date, school_grade, main_school_class, school_name: finalSchoolName }])
         .select()
       if (error) throw error
       return data
@@ -70,10 +73,13 @@ export function useCreateStudent() {
 export function useUpdateStudent() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, name, class_id }) => {
+    mutationFn: async ({ id, name, class_id, start_date, school_grade, main_school_class, school_name }) => {
+      // Default school_name to "Chu Văn An" if not provided and not "Trường khác"
+      const finalSchoolName = main_school_class === 'Trường khác' ? school_name : 'Chu Văn An'
+      
       const { data, error } = await supabase
         .from('students')
-        .update({ name, class_id })
+        .update({ name, class_id, start_date, school_grade, main_school_class, school_name: finalSchoolName })
         .eq('id', id)
         .select()
       if (error) throw error

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useClasses, useCreateClass, useUpdateClass, useDeleteClass } from '../hooks/useClasses'
 import { useStudents } from '../hooks/useStudents'
 import { useAllPayments } from '../hooks/usePayment'
-import { getCurrentMonth, getCurrentYear, formatCurrency } from '../utils/helpers'
+import { getCurrentMonth, getCurrentYear, formatCurrency, formatDate } from '../utils/helpers'
 import ClassModal from '../components/ClassModal'
 import LoadingSpinner from '../components/LoadingSpinner'
 
@@ -96,6 +96,16 @@ export default function LopHoc() {
                   <p className="text-sm text-gray-700 font-medium mb-1">
                     Học phí: {formatCurrency(cls.monthly_fee)}
                   </p>
+                  {cls.level && (
+                    <p className="text-sm text-gray-600">
+                      {cls.level}
+                    </p>
+                  )}
+                  {cls.start_date && (
+                    <p className="text-sm text-gray-600">
+                      Ngày bắt đầu: {formatDate(cls.start_date)}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">

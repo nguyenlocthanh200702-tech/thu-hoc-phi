@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useStudents, useCreateStudent, useUpdateStudent, useDeleteStudent } from '../hooks/useStudents'
 import { useClasses } from '../hooks/useClasses'
+import { formatDate } from '../utils/helpers'
 import StudentModal from '../components/StudentModal'
 import LoadingSpinner from '../components/LoadingSpinner'
 
@@ -88,9 +89,20 @@ export default function HocSinh() {
               className="block hover:opacity-80 transition-opacity mb-3"
             >
               <div className="flex items-center justify-between">
-                <div>
+                <div className="flex-1">
                   <h3 className="font-semibold text-gray-800">{student.name}</h3>
                   <p className="text-sm text-gray-600">{student.class?.name}</p>
+                  {student.main_school_class && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {student.school_grade ? `Khối ${student.school_grade}` : ''} - {student.main_school_class}
+                      {student.school_name && student.main_school_class === 'Trường khác' && ` (${student.school_name})`}
+                    </p>
+                  )}
+                  {student.start_date && (
+                    <p className="text-xs text-gray-500">
+                      Bắt đầu: {formatDate(student.start_date)}
+                    </p>
+                  )}
                 </div>
                 <span className="text-gray-400">→</span>
               </div>

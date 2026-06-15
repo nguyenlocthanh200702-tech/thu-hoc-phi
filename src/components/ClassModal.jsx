@@ -1,17 +1,21 @@
 import { useState, useEffect } from 'react'
+import { getCurrentDateUTC7, formatDateForInput, getClassLevels } from '../utils/helpers'
 
 export default function ClassModal({ isOpen, class: editingClass, onClose, onSubmit, isLoading = false }) {
-  const [formData, setFormData] = useState({ name: '', monthly_fee: '' })
+  const [formData, setFormData] = useState({ name: '', monthly_fee: '', start_date: '', level: '' })
   const [error, setError] = useState('')
+  const classLevels = getClassLevels()
 
   useEffect(() => {
     if (editingClass) {
       setFormData({
         name: editingClass.name,
-        monthly_fee: editingClass.monthly_fee
+        monthly_fee: editingClass.monthly_fee,
+        start_date: formatDateForInput(editingClass.start_date) || '',
+        level: editingClass.level || ''
       })
     } else {
-      setFormData({ name: '', monthly_fee: '' })
+      setFormData({ name: '', monthly_fee: '', start_date: getCurrentDateUTC7(), level: '' })
     }
     setError('')
   }, [editingClass, isOpen])
@@ -69,6 +73,38 @@ export default function ClassModal({ isOpen, class: editingClass, onClose, onSub
               value={formData.monthly_fee}
               onChange={(e) => setFormData({ ...formData, monthly_fee: e.target.value })}
               placeholder="Ví dụ: 800000"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
+              disabled={isLoading}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Khối lớp
+            </label>
+            <select
+              value={formData.level}
+              onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
+              disabled={isLoading}
+            >
+              <option value="">Chọn khối...</option>
+              {classLevels.map(level => (
+                <option key={level} value={level}>
+                  {level}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Ngày bắt đầu
+            </label>
+            <input
+              type="date"
+              value={formData.start_date}
+              onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
               disabled={isLoading}
             />

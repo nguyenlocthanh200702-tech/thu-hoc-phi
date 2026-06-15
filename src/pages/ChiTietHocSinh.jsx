@@ -29,13 +29,26 @@ export default function ChiTietHocSinh() {
     )
   }
 
-  // Generate payment records for 12 months of current year
+  // Generate payment records for multiple years
   const months = Array.from({ length: 12 }, (_, i) => i + 1)
   const paymentMap = {}
   payments.forEach(p => {
     const key = `${p.month}-${p.year}`
     paymentMap[key] = p
   })
+
+  // Determine years to display: from student start year to current year
+  let startYear = currentYear
+  if (student.start_date) {
+    const studentStartYear = new Date(student.start_date).getFullYear()
+    startYear = studentStartYear
+  }
+
+  // Create array of years from start year to current year, in descending order (current year first)
+  const yearsToDisplay = []
+  for (let year = currentYear; year >= startYear; year--) {
+    yearsToDisplay.push(year)
+  }
 
   const handleMarkPaid = (month, year) => {
     setModalState({ isOpen: true, month, year })
@@ -86,42 +99,46 @@ export default function ChiTietHocSinh() {
       </div>
 
       <div className="mb-4">
-        <h2 className="text-lg font-bold text-gray-800 mb-4">Lịch sử thanh toán {currentYear}</h2>
-        <div className="grid grid-cols-3 gap-2">
-          {months.map(month => {
-            const key = `${month}-${currentYear}`
-            const payment = paymentMap[key]
-            const isPaid = payment?.paid
-            
-            return (
-              <div key={month}>
-                {isPaid ? (
-                  <button
-                    onClick={() => handleTogglePaid(month, currentYear, true)}
-                    className="w-full p-3 bg-emerald-50 border-2 border-emerald-500 text-emerald-600 rounded-lg font-medium text-sm hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors"
-                    title="Nhấn để hủy đánh dấu thanh toán"
-                  >
-                    <div className="text-lg mb-1">✓</div>
-                    {monthNames[month - 1]}
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleMarkPaid(month, currentYear)}
-                    className="w-full p-3 bg-red-50 border-2 border-red-300 text-red-600 rounded-lg font-medium text-sm hover:bg-red-100 transition-colors"
-                  >
-                    <div className="text-lg mb-1">✕</div>
-                    {monthNames[month - 1]}
-                  </button>
-                )}
-                {payment?.paid_at && (
-                  <p className="text-xs text-gray-500 mt-1 text-center">
-                    {formatDate(payment.paid_at)}
-                  </p>
-                )}
-              </div>
-            )
-          })}
-        </div>
+        {yearsToDisplay.map(year => (
+          <div key={year} className="mb-8">
+            <h2 className="text-lg font-bold text-gray-800 mb-4">Lịch sử thanh toán {year}</h2>
+            <div className="grid grid-cols-3 gap-2">
+              {months.map(month => {
+                const key = `${month}-${year}`
+                const payment = paymentMap[key]
+                const isPaid = payment?.paid
+                
+                return (
+                  <div key={`${month}-${year}`}>
+                    {isPaid ? (
+                      <button
+                        onClick={() => handleTogglePaid(month, year, true)}
+                        className="w-full p-3 bg-emerald-50 border-2 border-emerald-500 text-emerald-600 rounded-lg font-medium text-sm hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors"
+                        title="Nhấn để hủy đánh dấu thanh toán"
+                      >
+                        <div className="text-lg mb-1">✓</div>
+                        {monthNames[month - 1]}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleMarkPaid(month, year)}
+                        className="w-full p-3 bg-red-50 border-2 border-red-300 text-red-600 rounded-lg font-medium text-sm hover:bg-red-100 transition-colors"
+                      >
+                        <div className="text-lg mb-1">✕</div>
+                        {monthNames[month - 1]}
+                      </button>
+                    )}
+                    {payment?.paid_at && (
+                      <p className="text-xs text-gray-500 mt-1 text-center">
+                        {formatDate(payment.paid_at)}
+                      </p>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
       <ConfirmModal

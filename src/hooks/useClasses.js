@@ -35,10 +35,10 @@ export function useClassById(classId) {
 export function useCreateClass() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ name, monthly_fee }) => {
+    mutationFn: async ({ name, monthly_fee, start_date, level }) => {
       const { data, error } = await supabase
         .from('classes')
-        .insert([{ name, monthly_fee }])
+        .insert([{ name, monthly_fee, start_date, level }])
         .select()
       if (error) throw error
       return data
@@ -52,10 +52,10 @@ export function useCreateClass() {
 export function useUpdateClass() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, name, monthly_fee }) => {
+    mutationFn: async ({ id, name, monthly_fee, start_date, level }) => {
       const { data, error } = await supabase
         .from('classes')
-        .update({ name, monthly_fee })
+        .update({ name, monthly_fee, start_date, level })
         .eq('id', id)
         .select()
       if (error) throw error

@@ -13,6 +13,32 @@ export function getCurrentYear() {
 }
 
 /**
+ * Get current date in UTC+7 timezone (Hanoi, Bangkok, Jakarta)
+ * Returns YYYY-MM-DD format for use with <input type="date">
+ */
+export function getCurrentDateUTC7() {
+  // Create date in UTC+7
+  const now = new Date()
+  const utcPlus7 = new Date(now.getTime() + (7 * 60 - now.getTimezoneOffset()) * 60 * 1000)
+  const year = utcPlus7.getFullYear()
+  const month = String(utcPlus7.getMonth() + 1).padStart(2, '0')
+  const day = String(utcPlus7.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+/**
+ * Convert date string to YYYY-MM-DD format for use with <input type="date">
+ */
+export function formatDateForInput(dateString) {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+/**
  * Format date to DD/MM/YYYY
  */
 export function formatDate(dateString) {
@@ -97,4 +123,23 @@ export function calculateOverallStats(payments, students, classes, month, year) 
     totalCollected,
     remaining
   }
+}
+
+/**
+ * Get main school classes for each grade
+ */
+export function getMainSchoolClasses() {
+  return {
+    '6': ['6/1', '6/2', '6/3', '6/4', '6/5', '6/6', '6/7', 'Trường khác'],
+    '7': ['7/1', '7/2', '7/3', '7/4', '7/5', '7/6', '7/7', 'Trường khác'],
+    '8': ['8/1', '8/2', '8/3', '8/4', '8/5', '8/6', '8/7', 'Trường khác'],
+    '9': ['9/1', '9/2', '9/3', '9/4', '9/5', '9/6', '9/7', 'Trường khác']
+  }
+}
+
+/**
+ * Get available class levels
+ */
+export function getClassLevels() {
+  return ['Khối 6', 'Khối 7', 'Khối 8', 'Khối 9']
 }
