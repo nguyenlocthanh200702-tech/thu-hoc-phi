@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { useStudents, useCreateStudent, useUpdateStudent, useArchiveStudent } from '../hooks/useStudents'
+import { useStudents, useCreateStudent, useUpdateStudent, useDeleteStudent } from '../hooks/useStudents'
 import { useClasses } from '../hooks/useClasses'
 import StudentModal from '../components/StudentModal'
 import LoadingSpinner from '../components/LoadingSpinner'
@@ -14,7 +14,7 @@ export default function HocSinh() {
   
   const createStudentMutation = useCreateStudent()
   const updateStudentMutation = useUpdateStudent()
-  const archiveStudentMutation = useArchiveStudent()
+  const deleteStudentMutation = useDeleteStudent()
 
   const filteredStudents = useMemo(() => {
     return students.filter(student =>
@@ -42,10 +42,10 @@ export default function HocSinh() {
     }
   }
 
-  const handleArchive = async (studentId) => {
-    if (confirm('Bạn chắc chắn muốn lưu trữ học sinh này?')) {
+  const handleDelete = async (studentId) => {
+    if (confirm('Bạn chắc chắn muốn xóa học sinh này? Hành động này không thể hoàn tác.')) {
       try {
-        await archiveStudentMutation.mutateAsync(studentId)
+        await deleteStudentMutation.mutateAsync(studentId)
       } catch (error) {
         console.error('Error:', error)
       }
@@ -104,10 +104,10 @@ export default function HocSinh() {
                 Sửa
               </button>
               <button
-                onClick={() => handleArchive(student.id)}
+                onClick={() => handleDelete(student.id)}
                 className="flex-1 px-3 py-2 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors font-medium"
               >
-                Lưu trữ
+                Xóa
               </button>
             </div>
           </div>

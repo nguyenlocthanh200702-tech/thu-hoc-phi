@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useClasses, useCreateClass, useUpdateClass, useArchiveClass } from '../hooks/useClasses'
+import { useClasses, useCreateClass, useUpdateClass, useDeleteClass } from '../hooks/useClasses'
 import { useStudents } from '../hooks/useStudents'
 import { useAllPayments } from '../hooks/usePayment'
 import { getCurrentMonth, getCurrentYear, formatCurrency } from '../utils/helpers'
@@ -18,7 +18,7 @@ export default function LopHoc() {
   
   const createClassMutation = useCreateClass()
   const updateClassMutation = useUpdateClass()
-  const archiveClassMutation = useArchiveClass()
+  const deleteClassMutation = useDeleteClass()
 
   if (classesLoading || studentsLoading || paymentsLoading) {
     return <LoadingSpinner />
@@ -40,10 +40,10 @@ export default function LopHoc() {
     }
   }
 
-  const handleArchive = async (classId) => {
-    if (confirm('Bạn chắc chắn muốn lưu trữ lớp này?')) {
+  const handleDelete = async (classId) => {
+    if (confirm('Bạn chắc chắn muốn xóa lớp này? Hành động này không thể hoàn tác.')) {
       try {
-        await archiveClassMutation.mutateAsync(classId)
+        await deleteClassMutation.mutateAsync(classId)
       } catch (error) {
         console.error('Error:', error)
       }
@@ -120,10 +120,10 @@ export default function LopHoc() {
                   Sửa
                 </button>
                 <button
-                  onClick={() => handleArchive(cls.id)}
+                  onClick={() => handleDelete(cls.id)}
                   className="flex-1 px-3 py-2 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors font-medium"
                 >
-                  Lưu trữ
+                  Xóa
                 </button>
               </div>
             </div>

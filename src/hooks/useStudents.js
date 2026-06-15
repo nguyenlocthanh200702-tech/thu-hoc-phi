@@ -86,13 +86,13 @@ export function useUpdateStudent() {
   })
 }
 
-export function useArchiveStudent() {
+export function useDeleteStudent() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (studentId) => {
       const { error } = await supabase
         .from('students')
-        .update({ active: false })
+        .delete()
         .eq('id', studentId)
       if (error) throw error
     },

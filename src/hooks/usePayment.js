@@ -65,3 +65,24 @@ export function useMarkPaid() {
     }
   })
 }
+
+export function useTogglePaid() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ studentId, month, year, paid }) => {
+      const { error } = await supabase
+        .from('payments')
+        .upsert({
+          student_id: studentId,
+          month,
+          year,
+          paid: paid,
+          paid_at: paid ? new Date().toISOString() : null
+        }, { onConflict: 'student_id,month,year' })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payments'] })
+    }
+  })
+}

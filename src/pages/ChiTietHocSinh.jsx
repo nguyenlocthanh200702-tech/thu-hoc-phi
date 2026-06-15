@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStudentById } from '../hooks/useStudents'
-import { useStudentPayments, useMarkPaid } from '../hooks/usePayment'
+import { useStudentPayments, useMarkPaid, useTogglePaid } from '../hooks/usePayment'
 import ConfirmModal from '../components/ConfirmModal'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { getCurrentYear, formatCurrency, formatDate } from '../utils/helpers'
@@ -15,6 +15,7 @@ export default function ChiTietHocSinh() {
   const { data: student, isLoading: studentLoading } = useStudentById(id)
   const { data: payments = [], isLoading: paymentsLoading, refetch } = useStudentPayments(id)
   const markPaidMutation = useMarkPaid()
+  const togglePaidMutation = useTogglePaid()
 
   if (studentLoading || paymentsLoading) {
     return <LoadingSpinner />
@@ -52,6 +53,16 @@ export default function ChiTietHocSinh() {
     }
   }
 
+  const handleTogglePaid = async (month, year, currentPaidStatus) => {
+    await togglePaidMutation.mutateAsync({
+      studentId: id,
+      month,
+      year,
+      paid: !currentPaidStatus
+    })
+    await refetch()
+  }
+
   const monthNames = [
     'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
     'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'
@@ -86,8 +97,9 @@ export default function ChiTietHocSinh() {
               <div key={month}>
                 {isPaid ? (
                   <button
-                    disabled
-                    className="w-full p-3 bg-emerald-50 border-2 border-emerald-500 text-emerald-600 rounded-lg font-medium text-sm cursor-default"
+                    onClick={() => handleTogglePaid(month, currentYear, true)}
+                    className="w-full p-3 bg-emerald-50 border-2 border-emerald-500 text-emerald-600 rounded-lg font-medium text-sm hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors"
+                    title="Nhấn để hủy đánh dấu thanh toán"
                   >
                     <div className="text-lg mb-1">✓</div>
                     {monthNames[month - 1]}

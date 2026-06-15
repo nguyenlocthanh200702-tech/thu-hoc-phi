@@ -82,3 +82,19 @@ export function useArchiveClass() {
     }
   })
 }
+
+export function useDeleteClass() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (classId) => {
+      const { error } = await supabase
+        .from('classes')
+        .delete()
+        .eq('id', classId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['classes'] })
+    }
+  })
+}
