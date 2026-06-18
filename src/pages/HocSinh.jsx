@@ -94,8 +94,7 @@ export default function HocSinh() {
                   <p className="text-sm text-gray-600">{student.class?.name}</p>
                   {student.main_school_class && (
                     <p className="text-xs text-gray-500 mt-1">
-                      {student.school_grade ? `Khối ${student.school_grade}` : ''} - {student.main_school_class}
-                      {student.school_name && student.main_school_class === 'Trường khác' && ` (${student.school_name})`}
+                      {student.main_school_class === 'Trường khác' ? student.school_name : student.main_school_class}
                     </p>
                   )}
                   {student.start_date && (
