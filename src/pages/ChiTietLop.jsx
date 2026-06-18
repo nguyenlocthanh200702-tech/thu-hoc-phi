@@ -109,7 +109,7 @@ export default function ChiTietLop() {
       </div>
 
       <div className="space-y-2">
-        {filteredStudents.map(student => {
+        {filteredStudents.map((student, index) => {
           const isPaid = paidStudents.has(student.id)
           return (
             <Link
@@ -121,7 +121,16 @@ export default function ChiTietLop() {
                 <span className={`text-2xl ${isPaid ? 'text-emerald-500' : 'text-red-500'}`}>
                   {isPaid ? '🟢' : '🔴'}
                 </span>
-                <span className="font-medium text-gray-800">{student.name}</span>
+                <div className="flex-1">
+                  <div className="font-medium text-gray-800">
+                    {index + 1}. {student.name}
+                  </div>
+                  {student.main_school_class && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {student.school_grade ? `Khối ${student.school_grade}` : ''}{student.school_grade && '/'}{student.main_school_class}
+                    </p>
+                  )}
+                </div>
               </div>
               <span className="text-gray-400">→</span>
             </Link>
