@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useClasses } from '../hooks/useClasses'
 import { useStudents } from '../hooks/useStudents'
 import { useAllPayments } from '../hooks/usePayment'
@@ -5,8 +6,8 @@ import { getCurrentMonth, getCurrentYear, getMonthName, formatCurrency, calculat
 import LoadingSpinner from '../components/LoadingSpinner'
 
 export default function TrangChu() {
-  const month = getCurrentMonth()
-  const year = getCurrentYear()
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth())
+  const [selectedYear, setSelectedYear] = useState(getCurrentYear())
   
   const { data: classes = [], isLoading: classesLoading } = useClasses()
   const { data: students = [], isLoading: studentsLoading } = useStudents()
@@ -16,7 +17,7 @@ export default function TrangChu() {
     return <LoadingSpinner />
   }
 
-  const stats = calculateOverallStats(payments, students, classes, month, year)
+  const stats = calculateOverallStats(payments, students, classes, selectedMonth, selectedYear)
 
   const StatCard = ({ title, value, unit, bgColor }) => (
     <div className={`rounded-lg ${bgColor} p-4`}>
@@ -30,8 +31,30 @@ export default function TrangChu() {
   return (
     <div className="p-4 pb-24">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">{getMonthName(month)}/{year}</h1>
-        <p className="text-gray-600">Tháng hiện tại</p>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-gray-800">{getMonthName(selectedMonth)}/{selectedYear}</h1>
+          <div className="ml-4 flex items-center gap-2">
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+              className="px-2 py-1 border rounded"
+            >
+              {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              className="px-2 py-1 border rounded"
+            >
+              {Array.from(new Set([...payments.map(p => p.year), getCurrentYear()])).sort((a,b)=>b-a).map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <p className="text-gray-600">Chọn tháng/năm để xem</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-8">
@@ -50,7 +73,7 @@ export default function TrangChu() {
             const classStudents = students.filter(s => s.class_id === cls.id)
             const paidCount = payments.filter(
               p => classStudents.some(s => s.id === p.student_id) && 
-                   p.month === month && p.year === year && p.paid
+                   p.month === selectedMonth && p.year === selectedYear && p.paid
             ).length
             const total = classStudents.length
             const percent = total > 0 ? Math.round((paidCount / total) * 100) : 0

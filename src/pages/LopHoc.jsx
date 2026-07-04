@@ -8,8 +8,8 @@ import ClassModal from '../components/ClassModal'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 export default function LopHoc() {
-  const month = getCurrentMonth()
-  const year = getCurrentYear()
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth())
+  const [selectedYear, setSelectedYear] = useState(getCurrentYear())
   const [modalState, setModalState] = useState({ isOpen: false, editingClass: null })
 
   const { data: classes = [], isLoading: classesLoading } = useClasses()
@@ -23,6 +23,11 @@ export default function LopHoc() {
   if (classesLoading || studentsLoading || paymentsLoading) {
     return <LoadingSpinner />
   }
+
+  // derive available years from payments
+  const yearsSet = new Set(payments.map(p => p.year))
+  yearsSet.add(getCurrentYear())
+  const years = Array.from(yearsSet).sort((a, b) => b - a)
 
   const handleSubmit = async (formData) => {
     try {
@@ -57,12 +62,32 @@ export default function LopHoc() {
           <h1 className="text-3xl font-bold text-gray-800">Danh sách lớp học</h1>
           <p className="text-gray-600 text-sm">{classes.length} lớp</p>
         </div>
-        <button
-          onClick={() => setModalState({ isOpen: true, editingClass: null })}
-          className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors"
-        >
-          + Thêm
-        </button>
+        <div className="flex items-center gap-3">
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+            className="px-3 py-2 border rounded"
+          >
+            {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+            className="px-3 py-2 border rounded"
+          >
+            {years.map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+          <button
+            onClick={() => setModalState({ isOpen: true, editingClass: null })}
+            className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors"
+          >
+            + Thêm
+          </button>
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -70,7 +95,7 @@ export default function LopHoc() {
           const classStudents = students.filter(s => s.class_id === cls.id)
           const monthPayments = payments.filter(
             p => classStudents.some(s => s.id === p.student_id) &&
-                 p.month === month && p.year === year
+                 p.month === selectedMonth && p.year === selectedYear
           )
           const paidCount = monthPayments.filter(p => p.paid).length
           const unpaidCount = classStudents.length - paidCount

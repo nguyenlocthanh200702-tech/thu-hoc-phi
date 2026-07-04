@@ -2,11 +2,12 @@ import { useClasses } from '../hooks/useClasses'
 import { useStudents } from '../hooks/useStudents'
 import { useAllPayments } from '../hooks/usePayment'
 import { getCurrentMonth, getCurrentYear, formatCurrency, getMonthName, calculateOverallStats } from '../utils/helpers'
+import { useState } from 'react'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 export default function Baocao() {
-  const month = getCurrentMonth()
-  const year = getCurrentYear()
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth())
+  const [selectedYear, setSelectedYear] = useState(getCurrentYear())
 
   const { data: classes = [], isLoading: classesLoading } = useClasses()
   const { data: students = [], isLoading: studentsLoading } = useStudents()
@@ -15,11 +16,10 @@ export default function Baocao() {
   if (classesLoading || studentsLoading || paymentsLoading) {
     return <LoadingSpinner />
   }
+  const stats = calculateOverallStats(payments, students, classes, selectedMonth, selectedYear)
 
-  const stats = calculateOverallStats(payments, students, classes, month, year)
-
-  // Get unpaid students grouped by class
-  const monthPayments = payments.filter(p => p.month === month && p.year === year)
+  // Get payments for selected period
+  const monthPayments = payments.filter(p => p.month === selectedMonth && p.year === selectedYear)
   const paidStudentIds = new Set(monthPayments.filter(p => p.paid).map(p => p.student_id))
   
   const unpaidByClass = classes.map(cls => ({
@@ -30,17 +30,29 @@ export default function Baocao() {
   })).filter(item => item.students.length > 0)
 
   const handleExportCSV = () => {
-    const headers = ['Tên', 'Lớp', 'Học phí', 'Tháng', 'Năm', 'Trạng thái', 'Ngày đóng']
-    
-    const rows = payments.map(p => [
-      p.student?.name || '',
-      p.student?.class?.name || '',
-      p.student?.class?.monthly_fee || '',
-      p.month,
-      p.year,
-      p.paid ? 'Đã đóng' : 'Chưa đóng',
-      p.paid_at ? new Date(p.paid_at).toLocaleDateString('vi-VN') : ''
-    ])
+    const headers = ['Tên', 'Lớp', 'Học phí', 'Main school class', 'Trường', 'Tháng', 'Năm', 'Trạng thái', 'Ngày đóng']
+
+    // Build a map of student payments for selected month/year
+    const paymentMap = new Map()
+    monthPayments.forEach(p => paymentMap.set(p.student_id, p))
+
+    // Build rows for every student, joining class info
+    const rows = students.map(s => {
+      const cls = classes.find(c => c.id === s.class_id)
+      const p = paymentMap.get(s.id)
+      const paid = p?.paid || false
+      return [
+        s.name || '',
+        cls?.name || '',
+        cls?.monthly_fee || '',
+        s.main_school_class || '',
+        s.school_name || '',
+        selectedMonth,
+        selectedYear,
+        paid ? 'Đã đóng' : 'Chưa đóng',
+        p?.paid_at ? new Date(p.paid_at).toLocaleDateString('vi-VN') : ''
+      ]
+    })
 
     const csvContent = [
       headers.join(','),
@@ -50,11 +62,11 @@ export default function Baocao() {
     const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
-    
+
     link.setAttribute('href', url)
-    link.setAttribute('download', `bao-cao-hoc-phi-${month}-${year}.csv`)
+    link.setAttribute('download', `bao-cao-hoc-phi-${selectedMonth}-${selectedYear}.csv`)
     link.style.visibility = 'hidden'
-    
+
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -73,7 +85,29 @@ export default function Baocao() {
     <div className="p-4 pb-24">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Báo cáo</h1>
-        <p className="text-gray-600 text-sm">{getMonthName(month)}/{year}</p>
+        <div className="flex items-center gap-3">
+          <p className="text-gray-600 text-sm">{getMonthName(selectedMonth)}/{selectedYear}</p>
+          <div className="ml-4 flex items-center gap-2">
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+              className="px-2 py-1 border rounded"
+            >
+              {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              className="px-2 py-1 border rounded"
+            >
+              {Array.from(new Set([...payments.map(p => p.year), getCurrentYear()])).sort((a,b)=>b-a).map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-8">

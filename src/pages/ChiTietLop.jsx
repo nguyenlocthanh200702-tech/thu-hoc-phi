@@ -10,8 +10,8 @@ export default function ChiTietLop() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [filter, setFilter] = useState('all')
-  const month = getCurrentMonth()
-  const year = getCurrentYear()
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth())
+  const [selectedYear, setSelectedYear] = useState(getCurrentYear())
 
   const { data: cls, isLoading: classLoading } = useClassById(id)
   const { data: students = [], isLoading: studentsLoading } = useStudentsByClass(id)
@@ -30,7 +30,7 @@ export default function ChiTietLop() {
   }
 
   const monthPayments = payments.filter(
-    p => p.month === month && p.year === year && 
+    p => p.month === selectedMonth && p.year === selectedYear && 
          students.some(s => s.id === p.student_id)
   )
 
@@ -74,7 +74,7 @@ export default function ChiTietLop() {
       </div>
 
       <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <button
             onClick={() => setFilter('all')}
             className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${
@@ -105,6 +105,26 @@ export default function ChiTietLop() {
           >
             ✕ ({unpaidCount})
           </button>
+          <div className="ml-3 flex items-center gap-2">
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+              className="px-2 py-1 border rounded"
+            >
+              {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              className="px-2 py-1 border rounded"
+            >
+              {Array.from(new Set([...payments.map(p => p.year), getCurrentYear()])).sort((a,b)=>b-a).map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
