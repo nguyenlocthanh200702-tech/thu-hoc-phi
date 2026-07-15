@@ -1,7 +1,7 @@
 import { useClasses } from '../hooks/useClasses'
 import { useStudents } from '../hooks/useStudents'
 import { useAllPayments } from '../hooks/usePayment'
-import { getCurrentMonth, getCurrentYear, formatCurrency, getMonthName, calculateOverallStats } from '../utils/helpers'
+import { getCurrentMonth, getCurrentYear, formatCurrency, getMonthName, calculateOverallStats, isStudentVisibleForMonth } from '../utils/helpers'
 import { useState } from 'react'
 import LoadingSpinner from '../components/LoadingSpinner'
 
@@ -22,9 +22,11 @@ export default function Baocao() {
   const monthPayments = payments.filter(p => p.month === selectedMonth && p.year === selectedYear)
   const paidStudentIds = new Set(monthPayments.filter(p => p.paid).map(p => p.student_id))
   
+  const visibleStudents = students.filter(student => isStudentVisibleForMonth(student, selectedMonth, selectedYear))
+
   const unpaidByClass = classes.map(cls => ({
     class: cls,
-    students: students.filter(
+    students: visibleStudents.filter(
       s => s.class_id === cls.id && !paidStudentIds.has(s.id)
     )
   })).filter(item => item.students.length > 0)
@@ -37,7 +39,7 @@ export default function Baocao() {
     monthPayments.forEach(p => paymentMap.set(p.student_id, p))
 
     // Build rows for every student, joining class info
-    const rows = students.map(s => {
+    const rows = visibleStudents.map(s => {
       const cls = classes.find(c => c.id === s.class_id)
       const p = paymentMap.get(s.id)
       const paid = p?.paid || false

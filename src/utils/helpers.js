@@ -70,13 +70,56 @@ export function getMonthName(month) {
 }
 
 /**
+ * Determine the month/year a student becomes visible for tuition collection.
+ * If the student joined after the 25th, they start from the next month.
+ */
+export function getEffectiveStartMonth(student) {
+  if (!student?.start_date) return null
+
+  const date = new Date(student.start_date)
+  const day = date.getDate()
+  const month = date.getMonth() + 1
+  const year = date.getFullYear()
+
+  if (day > 25) {
+    let nextMonth = month + 1
+    let nextYear = year
+
+    if (nextMonth > 12) {
+      nextMonth = 1
+      nextYear += 1
+    }
+
+    return { month: nextMonth, year: nextYear }
+  }
+
+  return { month, year }
+}
+
+/**
+ * Check whether a student should be included in the given month/year.
+ */
+export function isStudentVisibleForMonth(student, month, year) {
+  if (!student) return false
+  if (!student.start_date) return true
+
+  const effectiveStart = getEffectiveStartMonth(student)
+  if (!effectiveStart) return true
+
+  if (effectiveStart.year < year) return true
+  if (effectiveStart.year > year) return false
+
+  return effectiveStart.month <= month
+}
+
+/**
  * Calculate class payment stats for a given month/year
  */
 export function calculateClassStats(payments, students, classId, month, year) {
   const classPayments = payments.filter(
     p => p.student_id && p.student?.class_id === classId && p.month === month && p.year === year
   )
-  const classStudents = students.filter(s => s.class_id === classId && s.active)
+  const classStudents = students.filter(s => s.class_id === classId && s.active && isStudentVisibleForMonth(s, month, year))
   
   const paidCount = classPayments.filter(p => p.paid).length
   const unpaidCount = classStudents.length - paidCount
@@ -88,7 +131,7 @@ export function calculateClassStats(payments, students, classId, month, year) {
  * Calculate overall payment stats
  */
 export function calculateOverallStats(payments, students, classes, month, year) {
-  const activeStudents = students.filter(s => s.active)
+  const activeStudents = students.filter(s => s.active && isStudentVisibleForMonth(s, month, year))
   const monthPayments = payments.filter(p => p.month === month && p.year === year)
   const paidPayments = monthPayments.filter(p => p.paid)
   

@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useClassById } from '../hooks/useClasses'
 import { useStudentsByClass } from '../hooks/useStudents'
 import { useAllPayments } from '../hooks/usePayment'
-import { getCurrentMonth, getCurrentYear, formatCurrency } from '../utils/helpers'
+import { getCurrentMonth, getCurrentYear, formatCurrency, isStudentVisibleForMonth } from '../utils/helpers'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 export default function ChiTietLop() {
@@ -29,14 +29,16 @@ export default function ChiTietLop() {
     )
   }
 
+  const visibleStudents = students.filter(student => isStudentVisibleForMonth(student, selectedMonth, selectedYear))
+
   const monthPayments = payments.filter(
     p => p.month === selectedMonth && p.year === selectedYear && 
-         students.some(s => s.id === p.student_id)
+         visibleStudents.some(s => s.id === p.student_id)
   )
 
   const paidStudents = new Set(monthPayments.filter(p => p.paid).map(p => p.student_id))
   
-  let filteredStudents = students
+  let filteredStudents = visibleStudents
   if (filter === 'paid') {
     filteredStudents = students.filter(s => paidStudents.has(s.id))
   } else if (filter === 'unpaid') {
@@ -44,7 +46,7 @@ export default function ChiTietLop() {
   }
 
   const paidCount = paidStudents.size
-  const unpaidCount = students.length - paidCount
+  const unpaidCount = visibleStudents.length - paidCount
 
   return (
     <div className="p-4 pb-24">
@@ -60,7 +62,7 @@ export default function ChiTietLop() {
         <div className="grid grid-cols-3 gap-3">
           <div>
             <p className="text-xs text-gray-600">Tổng học sinh</p>
-            <p className="text-xl font-bold text-gray-800">{students.length}</p>
+            <p className="text-xl font-bold text-gray-800">{visibleStudents.length}</p>
           </div>
           <div>
             <p className="text-xs text-gray-600">Học phí</p>
@@ -68,7 +70,7 @@ export default function ChiTietLop() {
           </div>
           <div>
             <p className="text-xs text-gray-600">Dự kiến</p>
-            <p className="text-sm font-bold text-gray-800">{formatCurrency(cls.monthly_fee * students.length)}</p>
+            <p className="text-sm font-bold text-gray-800">{formatCurrency(cls.monthly_fee * visibleStudents.length)}</p>
           </div>
         </div>
       </div>
@@ -83,7 +85,7 @@ export default function ChiTietLop() {
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            Tất cả ({students.length})
+            Tất cả ({visibleStudents.length})
           </button>
           <button
             onClick={() => setFilter('paid')}

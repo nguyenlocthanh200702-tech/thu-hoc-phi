@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useClasses } from '../hooks/useClasses'
 import { useStudents } from '../hooks/useStudents'
 import { useAllPayments } from '../hooks/usePayment'
-import { getCurrentMonth, getCurrentYear, getMonthName, formatCurrency, calculateOverallStats } from '../utils/helpers'
+import { getCurrentMonth, getCurrentYear, getMonthName, isStudentVisibleForMonth } from '../utils/helpers'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 export default function TrangChu() {
@@ -17,16 +17,23 @@ export default function TrangChu() {
     return <LoadingSpinner />
   }
 
-  const stats = calculateOverallStats(payments, students, classes, selectedMonth, selectedYear)
+  const gradeOrder = ['6', '7', '8', '9']
+  const gradeStats = gradeOrder.map(grade => {
+    const gradeStudents = students.filter(student => student.school_grade === grade && isStudentVisibleForMonth(student, selectedMonth, selectedYear))
+    const paidCount = payments.filter(
+      payment => gradeStudents.some(student => student.id === payment.student_id) &&
+        payment.month === selectedMonth &&
+        payment.year === selectedYear &&
+        payment.paid
+    ).length
 
-  const StatCard = ({ title, value, unit, bgColor }) => (
-    <div className={`rounded-lg ${bgColor} p-4`}>
-      <p className="text-sm text-gray-600 mb-1">{title}</p>
-      <p className="text-2xl font-bold text-gray-800">
-        {unit === 'currency' ? formatCurrency(value) : value}
-      </p>
-    </div>
-  )
+    return {
+      grade,
+      totalStudents: gradeStudents.length,
+      paidStudents: paidCount,
+      unpaidStudents: gradeStudents.length - paidCount
+    }
+  })
 
   return (
     <div className="p-4 pb-24">
@@ -57,20 +64,36 @@ export default function TrangChu() {
         <p className="text-gray-600">Chọn tháng/năm để xem</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-8">
-        <StatCard title="Tổng học sinh" value={stats.totalStudents} bgColor="bg-blue-50" />
-        <StatCard title="Đã đóng" value={stats.paidStudents} bgColor="bg-emerald-50" />
-        <StatCard title="Chưa đóng" value={stats.unpaidStudents} bgColor="bg-red-50" />
-        <StatCard title="Dự kiến" value={stats.totalExpected} unit="currency" bgColor="bg-purple-50" />
-        <StatCard title="Đã thu" value={stats.totalCollected} unit="currency" bgColor="bg-green-50" />
-        <StatCard title="Còn thiếu" value={stats.remaining} unit="currency" bgColor="bg-orange-50" />
+      <div className="space-y-3 mb-8">
+        {gradeStats.map(({ grade, totalStudents, paidStudents, unpaidStudents }) => (
+          <div key={grade} className="bg-white rounded-lg shadow p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-bold text-gray-800">Khối {grade}</h2>
+              <span className="text-sm text-gray-600">{totalStudents} học sinh</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-lg bg-blue-50 p-3 text-center">
+                <p className="text-xs text-gray-600">Tổng</p>
+                <p className="text-xl font-bold text-blue-600">{totalStudents}</p>
+              </div>
+              <div className="rounded-lg bg-emerald-50 p-3 text-center">
+                <p className="text-xs text-gray-600">Đã đóng</p>
+                <p className="text-xl font-bold text-emerald-600">{paidStudents}</p>
+              </div>
+              <div className="rounded-lg bg-red-50 p-3 text-center">
+                <p className="text-xs text-gray-600">Chưa đóng</p>
+                <p className="text-xl font-bold text-red-600">{unpaidStudents}</p>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div>
         <h2 className="text-lg font-bold text-gray-800 mb-4">Tiến độ theo lớp</h2>
         <div className="space-y-3">
           {classes.map(cls => {
-            const classStudents = students.filter(s => s.class_id === cls.id)
+            const classStudents = students.filter(s => s.class_id === cls.id && isStudentVisibleForMonth(s, selectedMonth, selectedYear))
             const paidCount = payments.filter(
               p => classStudents.some(s => s.id === p.student_id) && 
                    p.month === selectedMonth && p.year === selectedYear && p.paid

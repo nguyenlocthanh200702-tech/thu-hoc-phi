@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useClasses, useCreateClass, useUpdateClass, useDeleteClass } from '../hooks/useClasses'
 import { useStudents } from '../hooks/useStudents'
 import { useAllPayments } from '../hooks/usePayment'
-import { getCurrentMonth, getCurrentYear, formatCurrency, formatDate } from '../utils/helpers'
+import { getCurrentMonth, getCurrentYear, formatCurrency, formatDate, isStudentVisibleForMonth } from '../utils/helpers'
 import ClassModal from '../components/ClassModal'
 import LoadingSpinner from '../components/LoadingSpinner'
 
@@ -92,7 +92,7 @@ export default function LopHoc() {
 
       <div className="space-y-4">
         {classes.map(cls => {
-          const classStudents = students.filter(s => s.class_id === cls.id)
+          const classStudents = students.filter(s => s.class_id === cls.id && isStudentVisibleForMonth(s, selectedMonth, selectedYear))
           const monthPayments = payments.filter(
             p => classStudents.some(s => s.id === p.student_id) &&
                  p.month === selectedMonth && p.year === selectedYear
